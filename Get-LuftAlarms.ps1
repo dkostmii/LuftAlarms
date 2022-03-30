@@ -63,7 +63,7 @@ function Write-Result {
 
         $stateMsg = $_.enabled ? $alarmStr : ($districtCount -gt 0 ? $alarmDistrStr : $calmStr);
         if ($AlarmOnly) {
-            if ($_.enabled) {
+            if ($_.enabled -or ($districtCount -gt 0)) {
                 Write-Host ($_.name + $stateMsg) -ForegroundColor ($_.enabled ? "Red" : ($districtCount -gt 0 ? "Yellow" : "Green"));
             }
         }
