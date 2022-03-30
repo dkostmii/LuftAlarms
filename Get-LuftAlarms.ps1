@@ -78,14 +78,16 @@ function Write-Result {
 
         if ($District) {
             $_.districts | ForEach-Object {
-                $districtMsg = $_.enabled ? $alarmStr : $calmStr;
-                if ($AlarmOnly) {
-                    if ($_.enabled) {
+                if ($_.name.Count -gt 0) {
+                    $districtMsg = $_.enabled ? $alarmStr : $calmStr;
+                    if ($AlarmOnly) {
+                        if ($_.enabled) {
+                            Write-Host "|----$($_.name)$districtMsg" -ForegroundColor ($_.enabled ? "Red" : "Green");
+                        }
+                    }
+                    else {
                         Write-Host "|----$($_.name)$districtMsg" -ForegroundColor ($_.enabled ? "Red" : "Green");
                     }
-                }
-                else {
-                    Write-Host "|----$($_.name)$districtMsg" -ForegroundColor ($_.enabled ? "Red" : "Green");
                 }
             }
         }
@@ -104,7 +106,7 @@ function Get-Luftalarms {
 
     $response = Invoke-RestMethod $url -Method GET -ContentType "application/json"
 
-    $info = $response.states.psobject.properties | ForEach-Object { 
+    Write-Result($response.states.psobject.properties | ForEach-Object { 
         @{ 
             name = $_.Name;
             enabled = $_.Value.enabled;
@@ -112,9 +114,7 @@ function Get-Luftalarms {
                 @{ name = $_.Name; enabled = $_.Value.enabled; };
             }
         }
-    }
-
-    Write-Result $info;
+    })
 }
 
 function Get-LuftalarmsAlt {
@@ -128,29 +128,30 @@ function Get-LuftalarmsAlt {
 
     $response = Invoke-RestMethod $url -Method GET -ContentType "application/json"
 
-    $info = $info | ForEach-Object {
-        $infoItem = $_
-        $response.alerts
-        | Select-Object @{ Name = "name"; Expression = { $_.location_title } }
-        | ForEach-Object {
-            $alarmItem = $_;
+    Write-Result ($info | ForEach-Object {
+        $infoItem = $_;
+        $allAlarms = $response.alerts
+        | Select-Object @{ Name = "name"; Expression = { $_.location_title } };
 
-            return @{ 
-                name = $infoItem.name;
-                enabled = $alarmItem.name -like $infoItem.name;
-                districts = $infoItem.districts | ForEach-Object {
-                    $districtItem = $_;
-                    return @{ 
-                        name = $districtItem.name;
-                        enabled = ($alarmItem.name -like $districtItem.name);
-                    };
-                }
-            };
-        }
-        | Select-Object -First 1
-    }
+        $stateAlarms = $allAlarms
+        | Where-Object { $infoItem.name -like $_.name };
 
-    Write-Result $info
+        return @{
+            name = $infoItem.name;
+            enabled = $stateAlarms.Count -gt 0;
+            districts = $infoItem.districts | ForEach-Object {
+                $districtItem = $_;
+
+                $districtAlarms = $allAlarms
+                | Where-Object { $districtItem.name -like $_.name };
+
+                return @{ 
+                    name = $districtItem.name;
+                    enabled = $districtAlarms.Count -gt 0;
+                };
+            }
+        };
+    })
 }
 
 function Work {
