@@ -35,22 +35,17 @@ $alarmStr = " ---> Тривога";
 $alarmDistrStr = " ---> Тривога в районі"
 $calmStr = " - Спокійно";
 
+
 function Get-Info {
-    if ( -not (Test-Path "states.json" -PathType Leaf)) {
-        Write-Error "Інформація про області, міста та райони відсутня."
-        Exit 1
-    }
+    $info = .\Get-States
 
-    $info = Get-Content "states.json" | ConvertFrom-Json
-
-    $info = $info | ForEach-Object {
+    return $info | Where-Object { $_.name.Count -gt 0 } | ForEach-Object {
         @{ name = $_.name; enabled = $false; districts = $_.districts | ForEach-Object {
             @{ name = $_.name; enabled = $false; }
         }; }
     };
-
-    return $info;
 }
+
 
 function Write-Result {
     param(
@@ -94,6 +89,7 @@ function Write-Result {
     }
 }
 
+
 function Get-Luftalarms {
     param(
         [Parameter(Mandatory = $true)]
@@ -116,6 +112,7 @@ function Get-Luftalarms {
         }
     })
 }
+
 
 function Get-LuftalarmsAlt {
     param(
@@ -154,39 +151,37 @@ function Get-LuftalarmsAlt {
     })
 }
 
+
 function Work {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
         [PSObject] $info
     )
-
+    
+    Write-Host "Джерело 1: `n" -ForegroundColor Magenta
     try {
-        Write-Host "Джерело 1: `n" -ForegroundColor Magenta
         Get-Luftalarms -info $info
-        Write-Output ""
-        Write-Host "Джерело 2: `n" -ForegroundColor Magenta
-        Get-LuftalarmsAlt -info $info
-        Write-Output ""
     }
     catch {
-        Write-Error "Помилка при завантаженні інформації про тривоги!"
+        Write-Host "Помилка при завантаженні інформації про тривоги!" -ForegroundColor Red
     }
+    Write-Output ""
+    Write-Host "Джерело 2: `n" -ForegroundColor Magenta
+    try {
+        Get-LuftalarmsAlt -info $info
+    }
+    catch {
+        Write-Host "Помилка при завантаженні інформації про тривоги!" -ForegroundColor Red
+    }
+    Write-Output ""
 }
 
 function Startup {
-    if (-not (Test-Path "states.json" -PathType Leaf)) {
-        Write-Output "Завантажую інформацію про області, міста та райони..."
-        try {
-            .\Get-States.ps1 -JSON -Write
-        }
-        catch {
-            Write-Error $_.Exception.ToString()
-        }
-    }
+    $info = Get-Info
 
     while ($true) {
-        Work (Get-Info)
+        Work $info
         $counter = 0
         Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r"
         Start-Sleep -Seconds 1

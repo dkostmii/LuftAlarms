@@ -1,65 +1,47 @@
 <#
 
 .SYNOPSIS
-Fetch states, cities and districts.
+Cache states, cities and districts.
 
 .DESCRIPTION
-Script to fetch states, cities and districts from API.
-
-.PARAMETER JSON
-Output result as JSON data?
-
-.PARAMETER Write
-Write JSON result to "states.json"? Usable only with -JSON parameter.
+Script to cache states, cities and districts from API in file states.json.
 
 .EXAMPLE
 PS> .\Get-States
 
-.EXAMPLE
-PS> .\Get-States -JSON
-
-.EXAMPLE
-PS> .\Get-States -JSON -Write
-
 #>
 
-param(
-    [switch] $JSON = $false,
-    [switch] $Write = $false
-)
+if (-not (Test-Path ".\states.json" -PathType Leaf)) {
+    $unixMillis = ([System.DateTimeOffset]::Now.ToUnixTimeMilliseconds());
+    $url = "https://map-static.vadimklimenko.com/statuses.json?t=$unixMillis";
 
-$unixMillis = ([System.DateTimeOffset]::Now.ToUnixTimeMilliseconds());
-$url = "https://map-static.vadimklimenko.com/statuses.json?t=$unixMillis";
-
-try {
-    $response = Invoke-RestMethod $url -Method GET -ContentType "application/json";
-}
-catch {
-    throw "Помилка при завантаженні ";
-    exit 1;
-}
-
-$responseArray = $response.states.psobject.properties | Select-Object @{
-    Name = "name";
-    Expression = { $_.Name };
-},
-@{
-    Name = "districts";
-    Expression = { $_.Value.districts.psobject.properties | Select-Object @{ Name = "name"; Expression = { $_.Name }; } };
-};
-
-$jsonResponseArray = ($responseArray | ConvertTo-Json -Depth 3);
-
-if ($json -and $write) {
-    if (-not (Test-Path ".\states.json" -PathType Leaf)) {
-        New-Item -ItemType File -Path ".\states.json";
+    try {
+        Write-Output "Завантажую інформацію про області, міста та райони..."
+        $response = Invoke-RestMethod $url -Method GET -ContentType "application/json";
     }
-    Set-Content -Path ".\states.json" -Value $jsonResponseArray;
-    Write-Output "Output written to states.json";
-}
-elseif ($json) {
-    return $jsonResponseArray;
+    catch {
+        throw "Помилка при завантаженні";
+        exit 1;
+    }
+
+    $responseArray = $response.states.psobject.properties | Select-Object @{
+        Name = "name";
+        Expression = { $_.Name };
+    },
+    @{
+        Name = "districts";
+        Expression = { $_.Value.districts.psobject.properties | Select-Object @{ Name = "name"; Expression = { $_.Name }; } };
+    };
+
+    $jsonResponseArray = ($responseArray | ConvertTo-Json -Depth 3);
+
+    New-Item -ItemType File -Path ".\states.json" | Out-Null;
+    Set-Content -Path ".\states.json" -Value $jsonResponseArray | Out-Null;
+    Write-Output "Інформацію записано у states.json";
 }
 else {
-    return $responseArray;
+    Write-Output "Інформацію уже записано до states.json. Обробляю..."
+    $responseArray = Get-Content "states.json" | ConvertFrom-Json
 }
+
+return $responseArray;
