@@ -93,7 +93,11 @@ function Write-Result {
 }
 
 function Get-Luftalarms {
-    $info = Get-Info
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $info
+    )
 
     $unixMillis = ([System.DateTimeOffset]::Now.ToUnixTimeMilliseconds())
     $url = "https://map-static.vadimklimenko.com/statuses.json?t=$unixMillis"
@@ -114,7 +118,11 @@ function Get-Luftalarms {
 }
 
 function Get-LuftalarmsAlt {
-    $info = Get-Info
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $info
+    )
 
     $url = "https://war-api.ukrzen.in.ua/alerts/api/alerts/active.json"
 
@@ -127,30 +135,37 @@ function Get-LuftalarmsAlt {
         | ForEach-Object {
             $alarmItem = $_;
 
-            @{ 
+            return @{ 
                 name = $infoItem.name;
                 enabled = $alarmItem.name -like $infoItem.name;
                 districts = $infoItem.districts | ForEach-Object {
                     $districtItem = $_;
-                    @{ 
+                    return @{ 
                         name = $districtItem.name;
                         enabled = ($alarmItem.name -like $districtItem.name);
-                    }
-                } 
-            }
+                    };
+                }
+            };
         }
+        | Select-Object -First 1
     }
 
     Write-Result $info
 }
 
 function Work {
+    param(
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [PSObject] $info
+    )
+
     try {
         Write-Host "Джерело 1: `n" -ForegroundColor Magenta
-        Get-Luftalarms
+        Get-Luftalarms -info $info
         Write-Output ""
         Write-Host "Джерело 2: `n" -ForegroundColor Magenta
-        Get-LuftalarmsAlt
+        Get-LuftalarmsAlt -info $info
         Write-Output ""
     }
     catch {
@@ -170,7 +185,7 @@ function Startup {
     }
 
     while ($true) {
-        Work
+        Work (Get-Info)
         $counter = 0
         Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r"
         Start-Sleep -Seconds 1
