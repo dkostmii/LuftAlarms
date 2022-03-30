@@ -171,9 +171,15 @@ function Startup {
 
     while ($true) {
         Work
-        Write-Output "Наступне оновлення через 20 секунд..."
+        $counter = 0
+        Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r"
+        Start-Sleep -Seconds 1
+        while ($counter -lt 20) {
+            $counter++;
+            Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r"
+            Start-Sleep -Seconds 1
+        }
         Write-Output ""
-        Start-Sleep -Seconds 20
     }
 }
 
