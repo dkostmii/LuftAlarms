@@ -12,6 +12,9 @@ Output only places with active alerts.
 .PARAMETER District
 Output all districts in state too.
 
+.PARAMETER NoWatch
+Exit script after result, instead of watching for alerts every 20 seconds. Combines with every other parameter.
+
 .EXAMPLE
 .\Get-LuftAlarms
 
@@ -24,11 +27,15 @@ Output all districts in state too.
 .EXAMPLE
 .\Get-LuftAlarms -AlarmOnly -District
 
+.EXAMPLE
+.\Get-LuftAlarms -AlarmOnly -NoWatch
+
 #>
 
 param(
     [switch] $AlarmOnly = $false,
-    [switch] $District = $false
+    [switch] $District = $false,
+    [switch] $NoWatch = $false
 )
 
 $alarmStr = " ---> Тривога";
@@ -37,7 +44,7 @@ $calmStr = " - Спокійно";
 
 
 function Get-Info {
-    $info = .\Get-States
+    $info = .\Get-States;
 
     return $info | Where-Object { $_.name.Count -gt 0 } | ForEach-Object {
         @{ name = $_.name; enabled = $false; districts = $_.districts | ForEach-Object {
@@ -84,9 +91,9 @@ function Write-Result {
                         Write-Host "|----$($_.name)$districtMsg" -ForegroundColor ($_.enabled ? "Red" : "Green");
                     }
                 }
-            }
+            };
         }
-    }
+    };
 }
 
 
@@ -97,10 +104,10 @@ function Get-Luftalarms {
         [PSObject] $info
     )
 
-    $unixMillis = ([System.DateTimeOffset]::Now.ToUnixTimeMilliseconds())
-    $url = "https://map-static.vadimklimenko.com/statuses.json?t=$unixMillis"
+    $unixMillis = ([System.DateTimeOffset]::Now.ToUnixTimeMilliseconds());
+    $url = "https://map-static.vadimklimenko.com/statuses.json?t=$unixMillis";
 
-    $response = Invoke-RestMethod $url -Method GET -ContentType "application/json"
+    $response = Invoke-RestMethod $url -Method GET -ContentType "application/json";
 
     Write-Result($response.states.psobject.properties | ForEach-Object { 
         @{ 
@@ -108,9 +115,9 @@ function Get-Luftalarms {
             enabled = $_.Value.enabled;
             districts = $_.Value.districts.psobject.properties | ForEach-Object {
                 @{ name = $_.Name; enabled = $_.Value.enabled; };
-            }
+            };
         }
-    })
+    });
 }
 
 
@@ -146,9 +153,9 @@ function Get-LuftalarmsAlt {
                     name = $districtItem.name;
                     enabled = $districtAlarms.Count -gt 0;
                 };
-            }
+            };
         };
-    })
+    });
 }
 
 
@@ -159,39 +166,44 @@ function Work {
         [PSObject] $info
     )
     
-    Write-Host "Джерело 1: `n" -ForegroundColor Magenta
+    Write-Host "Джерело 1: `n" -ForegroundColor Magenta;
     try {
-        Get-Luftalarms -info $info
+        Get-Luftalarms -info $info;
     }
     catch {
-        Write-Host "Помилка при завантаженні інформації про тривоги!" -ForegroundColor Red
+        Write-Host "Помилка при завантаженні інформації про тривоги!" -ForegroundColor Red;
     }
-    Write-Output ""
-    Write-Host "Джерело 2: `n" -ForegroundColor Magenta
+    Write-Output "";
+    Write-Host "Джерело 2: `n" -ForegroundColor Magenta;
     try {
         Get-LuftalarmsAlt -info $info
     }
     catch {
-        Write-Host "Помилка при завантаженні інформації про тривоги!" -ForegroundColor Red
+        Write-Host "Помилка при завантаженні інформації про тривоги!" -ForegroundColor Red;
     }
-    Write-Output ""
+    Write-Output "";
 }
+
 
 function Startup {
     $info = Get-Info
-
-    while ($true) {
-        Work $info
-        $counter = 0
-        Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r"
-        Start-Sleep -Seconds 1
-        while ($counter -lt 20) {
-            $counter++;
-            Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r"
-            Start-Sleep -Seconds 1
+    if (-not ($NoWatch)) {
+        while ($true) {
+            Work $info;
+            $counter = 0;
+            Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r";
+            Start-Sleep -Seconds 1;
+            while ($counter -lt 20) {
+                $counter++;
+                Write-Host -NoNewLine "Наступне оновлення через $(20 - $counter) секунд...  `r";
+                Start-Sleep -Seconds 1;
+            }
+            Write-Output "";
         }
-        Write-Output ""
+    }
+    else {
+        Work $info;
     }
 }
 
-Startup
+Startup;
