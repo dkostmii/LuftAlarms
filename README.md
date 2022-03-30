@@ -2,7 +2,7 @@
 
 Observe air raid alerts in PowerShell terminal.
 
-Script to observe air raid alerts in PowerShell terminal in states, cities and districts. Consumes two API's. Updates information every 20 seconds.
+Script to observe air raid alerts in PowerShell terminal in states, cities and districts. Consumes two APIs. Updates information every 20 seconds.
 
 To get more information, run:
 
