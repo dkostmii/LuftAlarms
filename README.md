@@ -2,7 +2,7 @@
 
 Observe air raid alerts in PowerShell terminal.
 
-Script to observe air raid alerts in PowerShell terminal in states, cities and districts. Consumes two APIs. Updates information every 20 seconds.
+Script to observe air raid alerts in PowerShell terminal in states, cities and districts. Updates information every 20 seconds.
 
 To get more information, run:
 
@@ -10,10 +10,13 @@ To get more information, run:
 Get-Help .\Get-LuftAlarms -Full
 ```
 
-## Sources of information
+## Source of information
 
-- [Карта повітряних тривог України](https://war.ukrzen.in.ua/alerts/)
 - [єМапа – Мапа сирен України](https://vadimklimenko.com/map/)
+
+## Project future
+
+I plan to make my own API, which will fetch data from Telegram channel [Повітряна Тривога](https://t.me/air_alert_ua)
 
 ## Requirements
 
