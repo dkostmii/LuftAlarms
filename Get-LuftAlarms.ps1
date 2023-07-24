@@ -105,12 +105,11 @@ function Get-Luftalarms {
     )
 
     $unixMillis = ([System.DateTimeOffset]::Now.ToUnixTimeMilliseconds());
-    $newUrl = "https://emapa.fra1.cdn.digitaloceanspaces.com/statuses.json"
-    $url = "https://map-static.vadimklimenko.com/statuses.json?t=$unixMillis";
+    $url = "https://vadimklimenko.com/map/statuses.json?t=$unixMillis";
 
-    $response = Invoke-RestMethod $newUrl -Method GET -ContentType "application/json";
+    $response = Invoke-RestMethod $url -Method GET -ContentType "application/json";
 
-    Write-Result($response.states.psobject.properties | ForEach-Object { 
+    Write-Result($response.states.psobject.properties | ForEach-Object {
         @{
             name = $_.Name;
             enabled = $_.Value.enabled;
@@ -128,7 +127,7 @@ function Work {
         [ValidateNotNullOrEmpty()]
         [PSObject] $info
     )
-    
+
     Write-Host "Повітряні тривоги: `n" -ForegroundColor Magenta;
     try {
         Get-Luftalarms -info $info;

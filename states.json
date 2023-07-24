@@ -1,5 +1,13 @@
 [
   {
+    "name": "АР Крим",
+    "districts": null
+  },
+  {
+    "name": "Севастополь'",
+    "districts": null
+  },
+  {
     "name": "Вінницька область",
     "districts": [
       {

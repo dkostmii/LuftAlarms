@@ -13,7 +13,7 @@ PS> .\Get-States
 
 if (-not (Test-Path ".\states.json" -PathType Leaf)) {
     $unixMillis = ([System.DateTimeOffset]::Now.ToUnixTimeMilliseconds());
-    $url = "https://map-static.vadimklimenko.com/statuses.json?t=$unixMillis";
+    $url = "https://vadimklimenko.com/map/statuses.json?t=$unixMillis";
 
     try {
         Write-Output "Завантажую інформацію про області, міста та райони..."
