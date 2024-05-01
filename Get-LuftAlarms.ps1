@@ -44,7 +44,7 @@ $calmStr = " - Спокійно";
 
 
 function Get-Info {
-    $info = .\Get-States;
+    $info = ./Get-States.ps1;
 
     return $info | Where-Object { $_.name.Count -gt 0 } | ForEach-Object {
         @{ name = $_.name; enabled = $false; districts = $_.districts | ForEach-Object {
